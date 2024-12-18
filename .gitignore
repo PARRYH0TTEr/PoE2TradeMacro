@@ -190,3 +190,7 @@ git_stats/*
 StyleCop.Cache
 bin
 obj
+
+
+# Visual Studio stuff
+.vs/
