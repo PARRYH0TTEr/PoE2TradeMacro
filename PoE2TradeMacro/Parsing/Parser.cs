@@ -15,35 +15,35 @@ namespace PoE2TradeMacro.Parsing
     public static class Parser
     {
 
-        public static readonly string testUniqueHelmetString = "Item Class: Helmets\r\nRarity: Unique\r\nThe Three Dragons\r\nSolid Mask\r\n--------\r\nEvasion Rating: 134 (augmented)\r\nEnergy Shield: 54 (augmented)\r\n--------\r\nRequirements:\r\nLevel: 45\r\nDex: 46\r\nInt: 46\r\n--------\r\nItem Level: 68\r\n--------\r\n54% increased Evasion and Energy Shield\r\n+11% to all Elemental Resistances\r\nFire Damage from Hits Contributes to Shock Chance instead of Ignite Chance and Magnitude\r\nCold Damage from Hits Contributes to Ignite Chance and Magnitude instead of Chill Magnitude\r\nLightning Damage from Hits Contributes to Freeze Buildup instead of Shock Chance\r\n--------\r\n\"The ice seared his naked feet\r\nAs the lightning stilled his heart,\r\nBut it was the flames upon his lover's face\r\nThat roused him to vengeance.\"\r\n- From 'The Three Dragons' by Victario of Sarn";
-
-        public static readonly string testWaystoneString = "Item Class: Waystones\r\nRarity: Magic\r\nSwarming Waystone (Tier 3) of Toughness\r\n--------\r\nWaystone Tier: 3\r\nWaystone Drop Chance: +90% (augmented)\r\n--------\r\nItem Level: 71\r\n--------\r\n18% increased Magic Monsters\r\n22% increased number of Rare Monsters\r\n32% more Monster Life\r\n--------\r\nCan be used in a Map Device, allowing you to enter a Map. Waystones can only be used once.";
-
         public static List<List<string>> ParseItem(string item)
         {
 
-            ParsedItem parsedItem = new ParsedItem();
+            ParsedItemReturnContainer parsedItemReturnContainer = new ParsedItemReturnContainer();
+            
+            List<List<string>> itemContainer = ParseItemIntoSections(item);
 
-            List<string> itemSections = ParseSections(item, Constants.filterGroupDelimiter);
+            parsedItemReturnContainer = ParseArmour(itemContainer[1], parsedItemReturnContainer);
+
+            return itemContainer;
+        }
+
+
+        public static List<List<string>> ParseItemIntoSections(string item)
+        {
             List<List<string>> itemContainer = new List<List<string>>();
+
+            List<string> itemSections = ParseSections(item, Constants.DELIMITER_filterGroup);
 
             foreach (string section in itemSections)
             {
-                List<string> subSections = ParseSections(section, Constants.filterGroupModsDelimiter);
+                List<string> subSections = ParseSections(section, Constants.DELIMITER_filterGroupMods);
                 subSections.RemoveAll(s => s == string.Empty);
                 itemContainer.Add(subSections);
             }
-            try
-            {
-                parsedItem = ParseItemHeader(itemContainer[0], parsedItem);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
-                        
+
             return itemContainer;
         }
+
 
         public static List<string> ParseSections(string item, string delimiter)
         {
@@ -60,18 +60,27 @@ namespace PoE2TradeMacro.Parsing
 
 
         // Pass the first section of the item to this function
-        public static ParsedItem ParseItemHeader(List<string> itemSection, ParsedItem parsedItemCopy)
+        public static ParsedItemReturnContainer ParseItemHeader(List<string> itemSection, ParsedItemReturnContainer parsedItemReturnContainer)
         {
+
+            //ParsedItemReturnContainer parsedItemReturnContainer = new ParsedItemReturnContainer();
+
             // Check if the first line of this section starts with "Item Class: ..." and exit early if not so
             if (!(itemSection[0].StartsWith(Constants.MODPREFIX_ITEMCLASS)))
             {
-                throw new IncompleteParsingException("The current item section did not contain mod-entry 'Item Class: '");
+                //parsedItemReturnContainer.parsedItemCopy = parsedItemCopy
+                parsedItemReturnContainer.parseStatus = false;
+                return parsedItemReturnContainer;
             }
 
             // Check if the second line of this section starts with "Rarity: ..." and exit early if not so
             if (!(itemSection[1].StartsWith(Constants.MODPREFIX_RARITY)))
             {
-                throw new IncompleteParsingException("The current item section did not contain mod-entry 'Rarity: '");
+
+                //parsedItemReturnContainer.parsedItemCopy = parsedItemCopy;
+                parsedItemReturnContainer.parseStatus = false;
+                return parsedItemReturnContainer;
+
             }
 
             string itemClass = itemSection[0].Replace(Constants.MODPREFIX_ITEMCLASS, "");
@@ -79,33 +88,138 @@ namespace PoE2TradeMacro.Parsing
             string itemName = itemSection[2];
             // don't extract basetype as some items, such as currency doesn't have basetype
 
-            parsedItemCopy.itemClass = itemClass;
-            parsedItemCopy.itemRarity = itemRarity;
-            parsedItemCopy.itemName = itemName;
+            //parsedItemCopy.itemClass = itemClass;
+            //parsedItemCopy.itemRarity = itemRarity;
+            //parsedItemCopy.itemName = itemName;
+
+
+            parsedItemReturnContainer.parsedItemCopy.itemClass = itemClass;
+            parsedItemReturnContainer.parsedItemCopy.itemRarity = itemRarity;
+            parsedItemReturnContainer.parsedItemCopy.itemName = itemName;
 
 
             switch (itemRarity)
             {
 
                 // Covering all equipment rarities. Since waytones also have 'equipment' rarities (see Constants), we handle those separately
-                case string tempRarity when Constants.EquipmentRarities.Contains(tempRarity): // && itemClass != "Waystones":
+                case string tempRarity when Constants.Rarities.Contains(tempRarity): // && itemClass != "Waystones":
 
                     if (itemClass == "Waystones")
                     {
-                        parsedItemCopy.itemBaseType = Constants.ITEMBASE_WAYSTONE;
+                        parsedItemReturnContainer.parsedItemCopy.itemBaseType = Constants.ITEMBASE_WAYSTONE;
                         break;
                     }
                     else
                     {
-                        parsedItemCopy.itemBaseType = itemSection[3];
+                        parsedItemReturnContainer.parsedItemCopy.itemBaseType = itemSection[3];
                         break;
                     }
+
+                // NOTE: We probably need to add more cases at some point. 
+
+                case Constants.RARITY_CURRENCY:
+                    parsedItemReturnContainer.parsedItemCopy.itemBaseType = Constants.ITEMBASE_STACKABLECURRENCY;
+                    break;
 
                 default:
                     break;
             }
 
-            return parsedItemCopy;
+            //parsedItemReturnContainer.parsedItemCopy = parsedItemCopy;
+            
+            parsedItemReturnContainer.parseStatus = true;
+            return parsedItemReturnContainer;
+            
+
+        }
+
+        // For now, this function only covers Armour, Evasation Rating and Enery Shield
+        public static ParsedItemReturnContainer ParseArmour(List<string> itemSection, ParsedItemReturnContainer parsedItemReturnContainer)
+        {
+            foreach (string modEntry in itemSection)
+            {
+                if (modEntry.StartsWith(Constants.MODPREFIX_ARMOUR)){
+
+                    int armourARMOUR;
+                    int.TryParse(Helper.RemoveAll(modEntry, 
+                                                    [
+                                                    Constants.MODPREFIX_ARMOUR,
+                                                    Constants.MODSUFFIX_AUGMENTED
+                                                    ]), out armourARMOUR);
+
+                    parsedItemReturnContainer.parsedItemCopy.armourARMOUR = armourARMOUR;
+                    parsedItemReturnContainer.parseStatus = true;
+                    continue;
+                }
+
+                if (modEntry.StartsWith(Constants.MODPREFIX_EVASIONRATING))
+                {
+                    int armourEVASIONRATING;
+                    int.TryParse(Helper.RemoveAll(modEntry,
+                                                    [
+                                                    Constants.MODPREFIX_EVASIONRATING,
+                                                    Constants.MODSUFFIX_AUGMENTED
+                                                    ]), out armourEVASIONRATING);
+
+                    parsedItemReturnContainer.parsedItemCopy.armourEVASIONRATING = armourEVASIONRATING;
+                    parsedItemReturnContainer.parseStatus = true;
+                    continue;
+                }
+
+                if (modEntry.StartsWith(Constants.MODPREFIX_ENERGYSHIELD))
+                {
+                    int armourENERGYSHIELD;
+                    int.TryParse(Helper.RemoveAll(modEntry,
+                                                    [
+                                                    Constants.MODPREFIX_ENERGYSHIELD,
+                                                    Constants.MODSUFFIX_AUGMENTED
+                                                    ]), out armourENERGYSHIELD);
+
+                    parsedItemReturnContainer.parsedItemCopy.armourENERGYSHIELD = armourENERGYSHIELD;
+                    parsedItemReturnContainer.parseStatus = true;
+                    continue;
+                }
+                //TODO: Add more implicits
+            }
+
+            if (parsedItemReturnContainer.parseStatus)
+            {
+                parsedItemReturnContainer = ParseItemQuality(itemSection, parsedItemReturnContainer);
+            }
+
+            return parsedItemReturnContainer;
+        }
+
+        // This takes a ParsedItemReturnContainer instead of a ParsedItem because it is only called from within other parsers
+        public static ParsedItemReturnContainer ParseItemQuality(List<string> itemSection, ParsedItemReturnContainer parsedItemReturnContainer)   //ParsedItem parsedItemCopy)
+        {            
+            foreach (string modEntry in itemSection)
+            {
+                if (modEntry.StartsWith(Constants.MODPREFIX_QUALITY))
+                {
+
+                    int itemQuality;
+                    if (!(int.TryParse(Helper.RemoveAll(modEntry,
+                                                            [
+                                                            Constants.MODPREFIX_QUALITY,
+                                                            Constants.MODSUFFIX_AUGMENTED,
+                                                            "+",
+                                                            "%"
+                                                            ]), out itemQuality)))
+                    {
+                        // Since this parser is called from within other parsers, it should not set the 
+                        //  parserStatus to anything, since it is only called if the previous parser has a 
+                        //  parserStatus = true
+                        return parsedItemReturnContainer;
+                    }
+
+                    parsedItemReturnContainer.parsedItemCopy.itemQuality = itemQuality;
+                    return parsedItemReturnContainer;
+                }
+            }
+
+            return parsedItemReturnContainer;
+
 
 
         }

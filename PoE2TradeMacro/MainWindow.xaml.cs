@@ -13,6 +13,7 @@ using System.Net.Http;
 using System.Web;
 
 using PoE2TradeMacro.Parsing;
+using PoE2TradeMacro.Util;
 
 namespace PoE2TradeMacro
 {
@@ -95,7 +96,7 @@ namespace PoE2TradeMacro
             //List<string> sectionSubSections = Parser.ParseSectionIntoSubSections(itemSections[1]);
 
             //List<List<string>> itemContainer = Parser.ParseItem(Parser.testUniqueHelmetString);
-            List<List<string>> itemContainer = Parser.ParseItem(Parser.testWaystoneString);
+            List<List<string>> itemContainer = Parser.ParseItem(Constants.TESTING_QualitySocketsBodyArmour);
 
 
 

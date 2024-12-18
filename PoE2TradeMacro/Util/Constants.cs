@@ -13,30 +13,46 @@ namespace PoE2TradeMacro.Util
         //public static readonly List<string> itemRarity = new List<string>(["Normal", "Magic", "Rare", "Unique"]);
         //public static readonly List<string> itemRarity2 = new List<string>(["Currency"]);
 
-        public static readonly List<string> EquipmentRarities = new List<string>(["Normal", "Magic", "Rare", "Unique"]);
+        public static readonly List<string> Rarities = new List<string>(["Normal", "Magic", "Rare", "Unique"]);
 
-        public static readonly string RARITY_NORMAL = "Normal";
-        public static readonly string RARITY_MAGIC = "Magic";
-        public static readonly string RARITY_RARE = "Rare";
-        public static readonly string RARITY_UNIQUE = "Unique";
-        public static readonly string RARITY_CURRENCY = "Currency";
-        public static readonly string RARITY_GEM = "Gem";
+        public const string RARITY_NORMAL = "Normal";
+        public const string RARITY_MAGIC = "Magic";
+        public const string RARITY_RARE = "Rare";
+        public const string RARITY_UNIQUE = "Unique";
+        public const string RARITY_CURRENCY = "Currency";
+        public const string RARITY_GEM = "Gem";
 
-        public static readonly string MODPREFIX_ITEMCLASS = "Item Class: ";
-        public static readonly string MODPREFIX_RARITY = "Rarity: ";
-        public static readonly string MODPREFIX_QUALITY = "Quality: ";
-        public static readonly string MODPREFIX_ARMOUR = "Armour: ";
-        public static readonly string MODPREFIX_EVASIONRATING = "Evasion Rating: ";
-        public static readonly string MODPREFIX_ENERGYSHIELD = "Energy Shield: ";
+        public const string MODPREFIX_ITEMCLASS = "Item Class: ";
+        public const string MODPREFIX_RARITY = "Rarity: ";
+        public const string MODPREFIX_QUALITY = "Quality: ";
+        public const string MODPREFIX_ARMOUR = "Armour: ";
+        public const string MODPREFIX_EVASIONRATING = "Evasion Rating: ";
+        public const string MODPREFIX_ENERGYSHIELD = "Energy Shield: ";
+        public const string MODPREFIX_PHYSICALDAMAGE = "Physical Damage: ";
+        public const string MODPREFIX_LIGHTNINGDAMAGE = "Lightning Damage: ";
+        public const string MODPREFIX_COLDDAMAGE = "Cold Damage: ";
+        public const string MODPREFIX_FIREDAMAGE = "Fire Damage: ";
+        public const string MODPREFIX_CRITCHANCE = "Critical Hit Chance: ";
+        public const string MODPREFIX_APS = "Attacks per Second: ";
+        public const string MODPREFIX_SPIRIT = "Spirit: ";
+        public const string MODPREFIX_BLOCKCHANCE = "Block chance: ";
+
+        public const string MODSUFFIX_AUGMENTED = " (augmented)";
+        public const string MODSUFFIX_RUNE = " (rune)";
+
+        public const string ITEMBASE_WAYSTONE = "Waystone";
+        public const string ITEMBASE_STACKABLECURRENCY = "Stackable Currency";
+
+        
 
 
+        public const string TESTING_UniqueHelmet = "Item Class: Helmets\r\nRarity: Unique\r\nThe Three Dragons\r\nSolid Mask\r\n--------\r\nEvasion Rating: 134 (augmented)\r\nEnergy Shield: 54 (augmented)\r\n--------\r\nRequirements:\r\nLevel: 45\r\nDex: 46\r\nInt: 46\r\n--------\r\nItem Level: 68\r\n--------\r\n54% increased Evasion and Energy Shield\r\n+11% to all Elemental Resistances\r\nFire Damage from Hits Contributes to Shock Chance instead of Ignite Chance and Magnitude\r\nCold Damage from Hits Contributes to Ignite Chance and Magnitude instead of Chill Magnitude\r\nLightning Damage from Hits Contributes to Freeze Buildup instead of Shock Chance\r\n--------\r\n\"The ice seared his naked feet\r\nAs the lightning stilled his heart,\r\nBut it was the flames upon his lover's face\r\nThat roused him to vengeance.\"\r\n- From 'The Three Dragons' by Victario of Sarn";
+        public const string TESTING_Waystone = "Item Class: Waystones\r\nRarity: Magic\r\nSwarming Waystone (Tier 3) of Toughness\r\n--------\r\nWaystone Tier: 3\r\nWaystone Drop Chance: +90% (augmented)\r\n--------\r\nItem Level: 71\r\n--------\r\n18% increased Magic Monsters\r\n22% increased number of Rare Monsters\r\n32% more Monster Life\r\n--------\r\nCan be used in a Map Device, allowing you to enter a Map. Waystones can only be used once.";
+        public const string TESTING_QualitySocketsBodyArmour = "Item Class: Body Armours\r\nRarity: Rare\r\nApocalypse Wrap\r\nIronclad Vestments\r\n--------\r\nQuality: +17% (augmented)\r\nArmour: 170 (augmented)\r\nEnergy Shield: 64 (augmented)\r\n--------\r\nRequirements:\r\nLevel: 54\r\nStr: 39\r\nInt: 39\r\n--------\r\nSockets: S S \r\n--------\r\nItem Level: 69\r\n--------\r\n30% increased Mana Regeneration Rate (rune)\r\n--------\r\n24% increased Armour and Energy Shield\r\n+55 to maximum Life\r\n+32 to Spirit\r\n+29 to Intelligence\r\n+21% to Fire Resistance\r\n+23% to Chaos Resistance";
+        public const string TESTING_MagicLifeFlaskWithQual = "Item Class: Life Flasks\r\nRarity: Magic\r\nGargantuan Life Flask of the Copious\r\n--------\r\nQuality: +20% (augmented)\r\nRecovers 852 (augmented) Life over 5 Seconds\r\nConsumes 10 of 101 (augmented) Charges on use\r\nCurrently has 0 Charges\r\n--------\r\nRequirements:\r\nLevel: 40\r\n--------\r\nItem Level: 41\r\n--------\r\n35% increased Charges\r\n--------\r\nRight click to drink. Can only hold charges while in belt. Refill at Wells or by killing monsters.";
 
-        public static readonly string ITEMBASE_WAYSTONE = "Waystone";
-
-
-
-        public static readonly string filterGroupDelimiter = "--------";
-        public static readonly string filterGroupModsDelimiter = "\r\n";
+        public const string DELIMITER_filterGroup= "--------";
+        public const string DELIMITER_filterGroupMods= "\r\n";
 
 
 
