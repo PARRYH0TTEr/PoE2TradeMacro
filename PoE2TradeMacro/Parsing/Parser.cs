@@ -6,7 +6,7 @@ using System.Net.NetworkInformation;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Windows.Automation;
 using PoE2TradeMacro.Util;
 
 
@@ -22,7 +22,7 @@ namespace PoE2TradeMacro.Parsing
             
             List<List<string>> itemContainer = ParseItemIntoSections(item);
 
-            parsedItemReturnContainer = ParseArmour(itemContainer[1], parsedItemReturnContainer);
+            parsedItemReturnContainer = ParseWeapon(itemContainer[1], parsedItemReturnContainer);
 
             return itemContainer;
         }
@@ -63,24 +63,16 @@ namespace PoE2TradeMacro.Parsing
         public static ParsedItemReturnContainer ParseItemHeader(List<string> itemSection, ParsedItemReturnContainer parsedItemReturnContainer)
         {
 
-            //ParsedItemReturnContainer parsedItemReturnContainer = new ParsedItemReturnContainer();
-
             // Check if the first line of this section starts with "Item Class: ..." and exit early if not so
             if (!(itemSection[0].StartsWith(Constants.MODPREFIX_ITEMCLASS)))
             {
-                //parsedItemReturnContainer.parsedItemCopy = parsedItemCopy
-                parsedItemReturnContainer.parseStatus = false;
                 return parsedItemReturnContainer;
             }
 
             // Check if the second line of this section starts with "Rarity: ..." and exit early if not so
             if (!(itemSection[1].StartsWith(Constants.MODPREFIX_RARITY)))
             {
-
-                //parsedItemReturnContainer.parsedItemCopy = parsedItemCopy;
-                parsedItemReturnContainer.parseStatus = false;
                 return parsedItemReturnContainer;
-
             }
 
             string itemClass = itemSection[0].Replace(Constants.MODPREFIX_ITEMCLASS, "");
@@ -96,7 +88,6 @@ namespace PoE2TradeMacro.Parsing
             parsedItemReturnContainer.parsedItemCopy.itemClass = itemClass;
             parsedItemReturnContainer.parsedItemCopy.itemRarity = itemRarity;
             parsedItemReturnContainer.parsedItemCopy.itemName = itemName;
-
 
             switch (itemRarity)
             {
@@ -124,16 +115,12 @@ namespace PoE2TradeMacro.Parsing
                 default:
                     break;
             }
-
-            //parsedItemReturnContainer.parsedItemCopy = parsedItemCopy;
             
             parsedItemReturnContainer.parseStatus = true;
             return parsedItemReturnContainer;
-            
-
         }
 
-        // For now, this function only covers Armour, Evasation Rating and Enery Shield
+        // For now, this function only covers Armour, Evasion Rating and Energy Shield
         public static ParsedItemReturnContainer ParseArmour(List<string> itemSection, ParsedItemReturnContainer parsedItemReturnContainer)
         {
             foreach (string modEntry in itemSection)
@@ -179,6 +166,20 @@ namespace PoE2TradeMacro.Parsing
                     parsedItemReturnContainer.parseStatus = true;
                     continue;
                 }
+
+                if (modEntry.StartsWith(Constants.MODPREFIX_BLOCKCHANCE))
+                {
+                    int armourBLOCKCHANCE;
+                    int.TryParse(Helper.RemoveAll(modEntry,
+                                                    [
+                                                    Constants.MODPREFIX_BLOCKCHANCE,
+                                                    Constants.MODSUFFIX_AUGMENTED
+                                                    ]), out armourBLOCKCHANCE);
+
+                    parsedItemReturnContainer.parsedItemCopy.armourBLOCKCHANCE = armourBLOCKCHANCE;
+                    parsedItemReturnContainer.parseStatus = true;
+                    continue;
+                }
                 //TODO: Add more implicits
             }
 
@@ -200,12 +201,12 @@ namespace PoE2TradeMacro.Parsing
 
                     int itemQuality;
                     if (!(int.TryParse(Helper.RemoveAll(modEntry,
-                                                            [
-                                                            Constants.MODPREFIX_QUALITY,
-                                                            Constants.MODSUFFIX_AUGMENTED,
-                                                            "+",
-                                                            "%"
-                                                            ]), out itemQuality)))
+                                                           [
+                                                               Constants.MODPREFIX_QUALITY,
+                                                               Constants.MODSUFFIX_AUGMENTED,
+                                                               "+",
+                                                               "%"
+                                                           ]), out itemQuality)))
                     {
                         // Since this parser is called from within other parsers, it should not set the 
                         //  parserStatus to anything, since it is only called if the previous parser has a 
@@ -217,11 +218,161 @@ namespace PoE2TradeMacro.Parsing
                     return parsedItemReturnContainer;
                 }
             }
+            return parsedItemReturnContainer;
+        }
+
+        public static ParsedItemReturnContainer ParseItemLevel(List<string> itemSection, ParsedItemReturnContainer parsedItemReturnContainer)
+        {
+            // Even though it seems that item level is in its own section, 
+            //  we'll still loop over the entries in the section for now.
+            foreach (string modEntry in itemSection)
+            {
+                if (modEntry.StartsWith(Constants.MODPREFIX_ITEMLEVEL))
+                {
+                    int itemLevel;
+                    int.TryParse(Helper.RemoveAll(modEntry,
+                                                    [
+                                                        Constants.MODPREFIX_ITEMLEVEL
+                                                    ]), out itemLevel);
+
+                    parsedItemReturnContainer.parsedItemCopy.itemLevel = itemLevel;
+                    parsedItemReturnContainer.parseStatus = true;
+                    continue;
+                }
+            }
+            return parsedItemReturnContainer;
+        }
+    
+        public static ParsedItemReturnContainer ParseWeapon(List<string> itemSection, ParsedItemReturnContainer parsedItemReturnContainer)
+        {
+            bool hasElementalDamage = false;
+            int elementalDamageAccum = 0;
+
+            foreach (string modEntry in itemSection)
+            {
+                if (modEntry.StartsWith(Constants.MODPREFIX_PHYSICALDAMAGE))
+                {
+                    string physicalDamageInterval = Helper.RemoveAll(modEntry,
+                                                    [
+                                                        Constants.MODPREFIX_PHYSICALDAMAGE,
+                                                        Constants.MODSUFFIX_AUGMENTED
+                                                    ]);
+
+                    int physicalDamage = Helper.GetAvgDamage(physicalDamageInterval);
+
+                    parsedItemReturnContainer.parsedItemCopy.weaponPHYSICALDAMAGE = physicalDamage;
+                    parsedItemReturnContainer.parseStatus = true;
+                    continue;
+                }
+
+                if (modEntry.StartsWith(Constants.MODPREFIX_LIGHTNINGDAMAGE))
+                {
+                    string lightningDamageInterval = Helper.RemoveAll(modEntry,
+                                                     [
+                                                        Constants.MODPREFIX_LIGHTNINGDAMAGE,
+                                                        Constants.MODSUFFIX_AUGMENTED
+                                                     ]);
+
+                    elementalDamageAccum += Helper.GetAvgDamage(lightningDamageInterval);
+                    hasElementalDamage = true;
+                    continue;
+                }
+
+                if (modEntry.StartsWith(Constants.MODPREFIX_COLDDAMAGE))
+                {
+                    string coldDamageInterval = Helper.RemoveAll(modEntry,
+                                                [
+                                                    Constants.MODPREFIX_COLDDAMAGE,
+                                                    Constants.MODSUFFIX_AUGMENTED
+                                                ]);
+
+                    elementalDamageAccum += Helper.GetAvgDamage(coldDamageInterval);
+                    hasElementalDamage = true;
+                    continue;
+                }
+
+                if (modEntry.StartsWith(Constants.MODPREFIX_FIREDAMAGE))
+                {
+                    string fireDamageInterval = Helper.RemoveAll(modEntry,
+                                                                    [
+                                                                        Constants.MODPREFIX_FIREDAMAGE,
+                                                                        Constants.MODSUFFIX_AUGMENTED
+                                                                    ]);
+
+                    elementalDamageAccum += Helper.GetAvgDamage(fireDamageInterval);
+                    hasElementalDamage = true;
+                    continue;
+                }
+
+                if (modEntry.StartsWith(Constants.MODPREFIX_CRITCHANCE))
+                {
+                    float critChance;
+                    float.TryParse(Helper.RemoveAll(modEntry,
+                                                        [
+                                                            Constants.MODPREFIX_CRITCHANCE,
+                                                            Constants.MODSUFFIX_AUGMENTED,
+                                                            "%"
+                                                        ]), out critChance);
+
+                    parsedItemReturnContainer.parsedItemCopy.weaponCRITCHANCE = critChance;
+                    parsedItemReturnContainer.parseStatus = true;
+                    continue;
+                }
+
+                if (modEntry.StartsWith(Constants.MODPREFIX_APS))
+                {
+                    float APS;
+                    float.TryParse(Helper.RemoveAll(modEntry, 
+                                                        [
+                                                            Constants.MODPREFIX_APS,
+                                                            Constants.MODSUFFIX_AUGMENTED
+                                                        ]), out APS);
+
+                    parsedItemReturnContainer.parsedItemCopy.weaponAPS = APS;
+                    parsedItemReturnContainer.parseStatus = true;
+                    continue;
+                }
+
+                if (modEntry.StartsWith(Constants.MODPREFIX_RELOADTIME))
+                {
+                    float reloadTime;
+                    float.TryParse(Helper.RemoveAll(modEntry,
+                                                        [
+                                                            Constants.MODPREFIX_RELOADTIME
+                                                        ]), out reloadTime);
+
+                    parsedItemReturnContainer.parsedItemCopy.weaponRELOADTIME = reloadTime;
+                    parsedItemReturnContainer.parseStatus = true;
+                    continue;
+                }
+
+                if (modEntry.StartsWith(Constants.MODPREFIX_SPIRIT))
+                {
+                    int spirit;
+                    int.TryParse(Helper.RemoveAll(modEntry,
+                                                    [
+                                                        Constants.MODPREFIX_SPIRIT,
+                                                        Constants.MODSUFFIX_AUGMENTED
+                                                    ]), out spirit);
+
+                    parsedItemReturnContainer.parsedItemCopy.weaponSPIRIT = spirit;
+                    parsedItemReturnContainer.parseStatus = true;
+                    continue;
+                }
+            }
+
+            if (hasElementalDamage)
+            {
+                parsedItemReturnContainer.parsedItemCopy.weaponELEMENTALDAMAGE = elementalDamageAccum;
+                parsedItemReturnContainer.parseStatus = true;
+            }
+
+            if (parsedItemReturnContainer.parseStatus)
+            {
+                ParseItemQuality(itemSection, parsedItemReturnContainer);
+            }
 
             return parsedItemReturnContainer;
-
-
-
         }
     }
 }

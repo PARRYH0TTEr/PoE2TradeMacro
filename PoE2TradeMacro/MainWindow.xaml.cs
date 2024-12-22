@@ -96,9 +96,7 @@ namespace PoE2TradeMacro
             //List<string> sectionSubSections = Parser.ParseSectionIntoSubSections(itemSections[1]);
 
             //List<List<string>> itemContainer = Parser.ParseItem(Parser.testUniqueHelmetString);
-            List<List<string>> itemContainer = Parser.ParseItem(Constants.TESTING_QualitySocketsBodyArmour);
-
-
+            List<List<string>> itemContainer2 = Parser.ParseItem(Constants.TESTING_ITEM_Crossbow);
 
         }
     }
