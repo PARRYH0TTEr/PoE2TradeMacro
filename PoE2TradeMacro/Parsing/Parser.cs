@@ -5,8 +5,10 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Automation;
+using PoE2TradeMacro.Parsing.Types;
 using PoE2TradeMacro.Util;
 
 
@@ -14,20 +16,43 @@ namespace PoE2TradeMacro.Parsing
 {
     public static class Parser
     {
+        // List of all available parsers
+        public static List<Func<List<string>, ParsedItemReturnContainer, ParsedItemReturnContainer>> parsers = new() //TODO: Consider throwing this function type into a delegate instead to make it semantically cleaner
+        {
+            ParseItemHeader,
+            ParseArmour,
+            ParseItemLevel,
+            ParseWeapon,
+            ParseSockets,
+            ParseExplicits
+        };
 
-        public static List<List<string>> ParseItem(string item)
+        // 
+        public static ParsedItemReturnContainer ParseItem(string item)
         {
 
             ParsedItemReturnContainer parsedItemReturnContainer = new ParsedItemReturnContainer();
             
             List<List<string>> itemContainer = ParseItemIntoSections(item);
 
-            parsedItemReturnContainer = ParseWeapon(itemContainer[1], parsedItemReturnContainer);
+            //parsedItemReturnContainer = ParseWeapon(itemContainer[1], parsedItemReturnContainer);
 
-            return itemContainer;
+            foreach (var parser in parsers) // Loop over all parsers
+            {
+                foreach (List<string> itemSection in itemContainer) // Loop over all item sections
+                {
+                    parsedItemReturnContainer = parser(itemSection, parsedItemReturnContainer); // Attempt to parse current item section
+                }
+            }
+
+            return parsedItemReturnContainer;
         }
 
-
+        // Converts the item string (ctrl + alt + c) into different item sections. Each section is delimited by
+        // the Constants.DELIMITER_filterGroup string and likewise each line in an item section is delimited by
+        // the Constants.DELIMITER_filterGroupMods string.
+        //
+        // This methods provides a nice collection of item sections to parse over.
         public static List<List<string>> ParseItemIntoSections(string item)
         {
             List<List<string>> itemContainer = new List<List<string>>();
@@ -45,11 +70,16 @@ namespace PoE2TradeMacro.Parsing
         }
 
 
+        // Given an item section (with a list of modifiers or similar) convert the section-string into a list of strings (each row as a separate string).
+        // Is meant to be applied both on the entire item string and on the individual sections of the item string (as can be seen in the above method)
         public static List<string> ParseSections(string item, string delimiter)
         {
             List<string> itemSections = new List<string>(item.Split(new string[] { delimiter }, StringSplitOptions.None));
             return itemSections;
         }
+
+
+
 
 
         //////////////////////////////////////////////////
@@ -374,5 +404,71 @@ namespace PoE2TradeMacro.Parsing
 
             return parsedItemReturnContainer;
         }
+    
+        public static ParsedItemReturnContainer ParseSockets(List<string> itemSection, ParsedItemReturnContainer parsedItemReturnContainer)
+        {
+            foreach (string modEntry in itemSection)
+            {
+                if (modEntry.StartsWith(Constants.MODPREFIX_SOCKETS))
+                {
+                    int sockets;
+                    //int.TryParse(Helper.RemoveAll(modEntry,
+                    //                                [
+                    //                                    Constants.MODPREFIX_SOCKETS
+                    //                                ]), out sockets);
+
+
+
+                    string socketsStringStripped = Helper.RemoveAll(modEntry,
+                                                    [
+                                                        Constants.MODPREFIX_SOCKETS,
+                                                        " "
+                                                    ]);
+
+                    sockets = socketsStringStripped.Length;
+
+                    parsedItemReturnContainer.parsedItemCopy.sockets = sockets;
+                    parsedItemReturnContainer.parseStatus = true;
+                    continue;
+                }
+            }
+            return parsedItemReturnContainer;
+        }
+
+        public static ParsedItemReturnContainer ParseExplicits(List<string> itemSection, ParsedItemReturnContainer parsedItemReturnContainer)
+        {
+            //Helper.Init(); //TODO: Move this line somewhere more relevant. It is only here for testing purposes
+
+            ParsedItemReturnContainer containerCopy = new ParsedItemReturnContainer(parsedItemReturnContainer);
+
+            foreach (string modEntry in itemSection)
+            {
+                string modEntryNormalized = Regex.Replace(modEntry, @"\d+", "#").Replace("+", "");
+
+                string modEntryId = Helper.MapModEntry(modEntryNormalized, "explicit");
+
+                if (modEntryId.Equals(string.Empty)) // Should exit on the first mod/line, if applied on the wrong itemSection
+                {
+                    return parsedItemReturnContainer;
+                }
+
+                List<int>? modEntryVals = Helper.GetAffixValues(modEntry);
+
+
+                Func<string, List<int>?, AffixVals> GetAffixValsInstance = (mEID, affixVals) => affixVals switch
+                {
+                    { Count: 1 } => new AffixVals(mEID, min: affixVals[0]),
+                    { Count: 2 } => new AffixVals(mEID, affixVals[0], affixVals[1]),
+                    _ => new AffixVals(mEID)
+                };
+
+
+                containerCopy.parsedItemCopy.explicitAffixEntries.Add(GetAffixValsInstance(modEntryId, modEntryVals));
+                containerCopy.parseStatus = true;
+
+            }
+            return containerCopy;
+        }
+
     }
 }

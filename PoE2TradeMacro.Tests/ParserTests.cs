@@ -1,5 +1,6 @@
 using System.Xml.Serialization;
 using PoE2TradeMacro.Parsing;
+using PoE2TradeMacro.Parsing.Types;
 using PoE2TradeMacro.Util;
 
 namespace PoE2TradeMacro.Tests
@@ -8,9 +9,9 @@ namespace PoE2TradeMacro.Tests
     {
 
         [Theory]
-        [InlineData(Constants.TESTING_ITEM_QualitySocketsBodyArmour, new string[] { "itemClass", "itemRarity" }, new string[] { "Body Armours", "Rare" })]
-        [InlineData(Constants.TESTING_ITEM_UniqueHelmet, new string[] { "itemClass", "itemRarity" }, new string[] { "Helmets", "Unique" })]
-        public void Parse_ItemHeader(string item, string[] expectedParsedItemFieldStrings ,string[] expectedParsedItemFieldValues)
+        [InlineData(Constants.TESTING_ITEM_QualitySocketsBodyArmour, new string[] { "itemClass", "itemRarity" }, new object[] { "Body Armours", "Rare" })]
+        [InlineData(Constants.TESTING_ITEM_UniqueHelmet, new string[] { "itemClass", "itemRarity" }, new object[] { "Helmets", "Unique" })]
+        public void Parse_ItemHeader(string item, string[] expectedParsedItemFieldStrings ,object[] expectedParsedItemFieldValues)
         {
             ParsedItemReturnContainer parsedItemReturnContainer = new ParsedItemReturnContainer();
 
@@ -36,7 +37,7 @@ namespace PoE2TradeMacro.Tests
 
         }
 
-        //NOTE: parseStatus is asserted to be false, since the item quality parser 'nested'
+        //NOTE: parseStatus is asserted to be false, since the item quality parser is 'nested'
         //          ,however parsing of the quality modEntry should still work as normal
         [Theory]
         [InlineData(Constants.TESTING_ITEM_QualitySocketsBodyArmour, 17)]
@@ -137,15 +138,68 @@ namespace PoE2TradeMacro.Tests
             for (int i = 0; i < expectedParsedItemFieldStrings.Length; i++)
             {
 
+                // This might seem redundant, but we somehow have to get the type of the field based on the 
+                //  current element in the expectedParsedItemFieldStrings[]
 
+                // Check if the current field-type is a float and if so compare with a precision of ~4,
+                //  separately from the rest of the assertions
+
+                //var currentField = parsedItemReturnContainer.parsedItemCopy.GetType()
+                //                    .GetField(expectedParsedItemFieldStrings[i])?
+                //                    .GetValue(parsedItemReturnContainer.parsedItemCopy);
+
+
+                var currentField = parsedItemReturnContainer.parsedItemCopy.GetType()
+                                    .GetField(expectedParsedItemFieldStrings[i]);
+
+                // Check if the current fieldtype is double. If so, do epsilon-close assert
+
+                //Nullable.GetUnderlyingType(currentFieldType) == typeof(double);
+                if (currentField?.FieldType == typeof(Nullable<double>))
+                {
+                    Assert.Equal(expected: (double)expectedParsedItemFieldValues[i],
+                            actual: (double)currentField?.GetValue(parsedItemReturnContainer.parsedItemCopy)
+                            
+                            , 5);
+                }
+                else
+                {
+                    Assert.Equal(expectedParsedItemFieldValues[i],
+
+                            currentField?.GetValue(parsedItemReturnContainer.parsedItemCopy)
+
+                            );
+                }
+            }
+        }
+
+        [Theory]
+        [InlineData(Constants.TESTING_ITEM_QualitySocketsBodyArmour, new string[] { "sockets" }, new object[] { 2 })]
+        [InlineData(Constants.TESTING_ITEM_ArcGem, new string[] { "sockets" }, new object[] { 4 })]
+        public void Parse_Sockets(string item, string[] expectedParsedItemFieldStrings, object[] expectedParsedItemFieldValues)
+        {
+            ParsedItemReturnContainer parsedItemReturnContainer = new ParsedItemReturnContainer();
+
+            List<List<string>> itemContainer = Parser.ParseItemIntoSections(item);
+
+            foreach (List<string> itemSection in itemContainer)
+            {
+                parsedItemReturnContainer = Parser.ParseSockets(itemSection, parsedItemReturnContainer);
+            }
+
+            Assert.True(parsedItemReturnContainer.parseStatus);
+
+            for (int i = 0; i < expectedParsedItemFieldStrings.Length; i++)
+            {
                 Assert.Equal(expectedParsedItemFieldValues[i],
-                    
+
                         parsedItemReturnContainer.parsedItemCopy.GetType()
                                     .GetField(expectedParsedItemFieldStrings[i])?
                                     .GetValue(parsedItemReturnContainer.parsedItemCopy)
-
                         );
             }
+
         }
+
     }
 }

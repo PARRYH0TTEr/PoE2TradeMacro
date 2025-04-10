@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PoE2TradeMacro.Parsing
+namespace PoE2TradeMacro.Parsing.Types
 {
-    
+
     public class ParsedItemReturnContainer
     {
         public bool parseStatus;
@@ -16,6 +16,12 @@ namespace PoE2TradeMacro.Parsing
         {
             parseStatus = false;
             parsedItemCopy = new ParsedItem();
+        }
+
+        public ParsedItemReturnContainer(ParsedItemReturnContainer other)
+        {
+            this.parseStatus = other.parseStatus;
+            this.parsedItemCopy = new ParsedItem(other.parsedItemCopy);
         }
     }
 }

@@ -194,3 +194,9 @@ obj
 
 # Visual Studio stuff
 .vs/
+
+
+
+
+# Ignore header stuff
+PoE2TradeMacro/Web/PriceCheck/Trade/header.json
