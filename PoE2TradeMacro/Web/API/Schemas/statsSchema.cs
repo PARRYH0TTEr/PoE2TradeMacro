@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace PoE2TradeMacro.Util.API.Schemas
+namespace PoE2TradeMacro.Web.API.Schemas
 {
     public class statsSchema
     {

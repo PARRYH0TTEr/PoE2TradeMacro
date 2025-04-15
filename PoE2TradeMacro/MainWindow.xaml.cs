@@ -37,6 +37,7 @@ namespace PoE2TradeMacro
         private string tes3JSONPayload = "{\"query\":{\"status\":{\"option\":\"online\"},\"filters\":{\"type_filters\":{\"filters\":{\"category\":{\"option\":\"weapon.onemelee\"}}},\"misc_filters\":{\"filters\":{\"ilvl\":{\"min\":50}}}}}}";
         private string tes4JSONPayload = "{\"query\":{\"status\":{\"option\":\"online\"},\"stats\":[{\"type\":\"and\",\"filters\":[{\"id\":\"explicit.stat_3321629045\",\"value\":{\"min\":24},\"disabled\":false},{\"id\":\"explicit.stat_3299347043\",\"value\":{\"min\":55},\"disabled\":false},{\"id\":\"explicit.stat_3981240776\",\"value\":{\"min\":32},\"disabled\":false},{\"id\":\"explicit.stat_328541901\",\"value\":{\"min\":29},\"disabled\":false},{\"id\":\"explicit.stat_3372524247\",\"value\":{\"min\":21},\"disabled\":false},{\"id\":\"explicit.stat_2923486259\",\"value\":{\"min\":23},\"disabled\":false}]}]}}";
 
+        private TradeClient tradeClient;
 
         //private string jsonPayload = @"
         //                                {
@@ -72,6 +73,7 @@ namespace PoE2TradeMacro
         public MainWindow()
         {
             InitializeComponent();
+            this.tradeClient = new TradeClient();
         }
 
         private async void HttpTestButton_Click(object sender, RoutedEventArgs e)
@@ -80,24 +82,21 @@ namespace PoE2TradeMacro
             //string encodedPayload = HttpUtility.UrlEncode(testJSONPayload);
             //string requestUrl = $"{tradeAPIUrl}?q={encodedPayload}";
 
-            try
+            ParsedItemReturnContainer pIRContainer = Parser.ParseItem(Constants.TESTING_ITEM_UniqueHelmet);
+
+            TradeRequest tradeRequestInstance = Helper.MapParsedItemToTradeRequest(pIRContainer.parsedItemCopy);
+
+            string tradeRequestJson = Helper.TemplateToJsonString(tradeRequestInstance);
+
+            TradeResponse tradeRequestResponse = await tradeClient.PostTradeRequest(tradeRequestJson, Constants.TRADE_API_Search);
+
+            if (!tradeRequestResponse.Successful) //Not successful
             {
-                var poeSessionID = POESESSID_TextBox.Text;
-                var userAgent = UserAgent_TextBox.Text;
-
-                httpClient.DefaultRequestHeaders.Add("User-Agent", userAgent);
-                httpClient.DefaultRequestHeaders.Add("Cookie", $"POESESSID={poeSessionID}");
-
-                var requestContent = new StringContent(tes4JSONPayload, Encoding.UTF8, "application/json");
-
-                using HttpResponseMessage response = await httpClient.PostAsync(tradeAPIUrl, requestContent);
-                response.EnsureSuccessStatusCode();
-                string responseBody = await response.Content.ReadAsStringAsync();
+                // Do something based on ErrorMessage, such as adjust timeout period to accommodate for rate limiting
             }
-            catch (HttpRequestException ex)
-            {
-                Console.Write(ex.Message);
-            }
+
+            FetchRequest fetchRequest = JsonSerializer.Deserialize<FetchRequest>(tradeRequestResponse.Content);
+
         }
 
         private void ParserTestButton_Click(object sender, RoutedEventArgs e)
@@ -137,8 +136,3 @@ namespace PoE2TradeMacro
         }
     }
 }
-
-
-
-// TODO:
-// Pull .json databases on launch of program instead of keeping local copy

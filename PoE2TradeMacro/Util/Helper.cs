@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.IO;
-using PoE2TradeMacro.Util.API.Schemas;
 using System.Runtime.CompilerServices;
 using PoE2TradeMacro.Parsing.Types;
 using System.Text.RegularExpressions;
 using PoE2TradeMacro.Web.PriceCheck.Trade;
+using PoE2TradeMacro.Web.API.Schemas;
 
 namespace PoE2TradeMacro.Util
 {
@@ -29,7 +29,7 @@ namespace PoE2TradeMacro.Util
 
         public static void Init()
         {
-            string statsJSONPath = Path.Combine(AppContext.BaseDirectory, "Util", "API", "Databases", "stats.json");
+            string statsJSONPath = Path.Combine(AppContext.BaseDirectory, "Web", "API", "Databases", "stats.json");
             string statsJSONFile = File.ReadAllText(statsJSONPath);
 
             statsJSONDeserialized = JsonSerializer.Deserialize<statsSchema>(statsJSONFile);
@@ -114,11 +114,12 @@ namespace PoE2TradeMacro.Util
                                         {
                                             Id = entry.AffixId,
                                             Disabled = false,
-                                            Value = new StatFilterValue
-                                            {
-                                                Min = entry.min,
-                                                Max = entry.max
-                                            }
+                                            //Value = new StatFilterValue
+                                            //{
+                                            //    Min = entry.min,
+                                            //    Max = entry.max
+                                            //}
+                                            Value = null
                                         }).ToList();
 
 
@@ -144,6 +145,38 @@ namespace PoE2TradeMacro.Util
             return tradeRequest;
 
         }
+
+        //public static T JsonStringToTemplate<T>(string json)
+        //{
+
+        //}
+
+
+        // Simple helper method to convert a template to its Json-string equivalent
+        public static string TemplateToJsonString<T>(T templatetInstance)
+        {
+            var serializationOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
+
+            return JsonSerializer.Serialize(templatetInstance, serializationOptions);
+        }
+
+
+
+        public static string FormatIdUrl(FetchRequest fRequest)
+        {
+            return $"{Constants.TRADE_Search}/{fRequest.Id}";
+        }
+
+
+
+
+
+
+
 
     }
 }

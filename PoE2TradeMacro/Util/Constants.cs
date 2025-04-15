@@ -68,9 +68,13 @@ namespace PoE2TradeMacro.Util
 
 
 
+        public const string TRADE_Search = "https://www.pathofexile.com/trade2/search/poe2/Standard";
         public const string TRADE_API_Search = "https://www.pathofexile.com/api/trade2/search/poe2/Standard";
         public const string TRADE_API_Fetch = "https://www.pathofexile.com/api/trade2/fetch";
         public const string TRADE_API_Stats = "https://www.pathofexile.com/api/trade2/data/stats";
+        public const string TRADE_API_Filters = "https://www.pathofexile.com/api/trade2/data/filters";
+        public const string TRADE_API_Items = "https://www.pathofexile.com/api/trade2/data/items";
+        public const string TRADE_API_Static = "https://www.pathofexile.com/api/trade2/data/static";
 
     }
 }

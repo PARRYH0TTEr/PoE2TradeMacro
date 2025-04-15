@@ -47,7 +47,7 @@ namespace PoE2TradeMacro.Web.PriceCheck.Trade
         public string? Id { get; set; }
 
         [JsonPropertyName("value")]
-        public StatFilterValue Value { get; set; }
+        public StatFilterValue? Value { get; set; }
 
         [JsonPropertyName("disabled")]
         public bool? Disabled { get; set; }
